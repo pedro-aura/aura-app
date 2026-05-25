@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA — Intelligence System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e2e6ec;
+    --border2: #d0d5de;
+    --text-primary: #0d1220;
+    --text-secondary: #4a5568;
+    --text-muted: #8090a8;
+    --text-faint: #b0b8c8;
+    --accent: #0d1220;
+    --accent-light: #f0f2f5;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .logo-group { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: .22em;
+    color: var(--text-primary);
+  }
+  .logo-divider { width: 1px; height: 16px; background: var(--border2); }
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .status-group { display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .status-dot.pulse { animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .status-text { font-size: 11px; color: var(--text-muted); }
+  .topbar-date {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    padding-left: 16px;
+    border-left: 0.5px solid var(--border);
+  }
+
+  /* METRICS */
+  .metrics-bar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .metric {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 14px;
+    flex: 1;
+  }
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .metric-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .metric-sub { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+  .metric-sub.green { color: var(--green); }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 180px;
+    background: var(--surface);
+    border-right: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 0 6px;
+    margin-bottom: 4px;
+  }
+
+  .agent-btn {
+    border: 0.5px solid transparent;
+    border-radius: 7px;
+    padding: 9px 10px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .agent-btn:hover { background: var(--bg); border-color: var(--border); }
+  .agent-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .agent-indicator {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .agent-btn.active .agent-indicator { background: var(--blue); }
+
+  .agent-info { flex: 1; min-width: 0; }
+  .agent-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: .07em;
+  }
+  .agent-btn.active .agent-name { color: #fff; }
+  .agent-role { font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+  .agent-btn.active .agent-role { color: rgba(255,255,255,0.45); }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 0.5px solid var(--border);
+  }
+  .sidebar-footer-text {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* CHAT AREA */
+  .chat-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .chat-header {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .chat-header-left {}
+  .chat-agent-title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    color: var(--text-primary);
+  }
+  .chat-agent-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .chat-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: .05em;
+  }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .msg { display: flex; flex-direction: column; gap: 3px; max-width: 85%; }
+  .msg.aura { align-self: flex-start; }
+  .msg.user { align-self: flex-end; }
+
+  .msg-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-faint);
+    letter-spacing: .08em;
+  }
+  .msg.user .msg-label { text-align: right; }
+
+  .msg-bubble {
+    padding: 10px 13px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .msg.aura .msg-bubble {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .msg.user .msg-bubble {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 13px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    align-self: flex-start;
+  }
+  .typing-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    animation: typing 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: .2s; }
+  .typing-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes typing {
+    0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
+    30% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* INPUT */
+  .input-area {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .input-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--text-primary);
+    background: transparent;
+    resize: none;
+    height: 22px;
+    line-height: 22px;
+  }
+  .input-field::placeholder { color: var(--text-faint); }
+
+  .btn-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .btn-icon:hover { background: var(--border); }
+  .btn-icon svg { width: 14px; height: 14px; stroke: var(--text-muted); fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+  .btn-mic { position: relative; }
+  .btn-mic.recording { background: #fee2e2; border-color: #fca5a5; }
+  .btn-mic.recording svg { stroke: #ef4444; }
+  .btn-mic.recording::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 9px;
+    border: 1.5px solid #ef444440;
+    animation: mic-pulse 1s infinite;
+  }
+  @keyframes mic-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0; }
+  }
+
+  .btn-send {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity .15s;
+    flex-shrink: 0;
+  }
+  .btn-send:hover { opacity: 0.85; }
+  .btn-send svg { width: 13px; height: 13px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* VOICE STATUS */
+  .voice-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #ef4444;
+    display: none;
+    align-items: center;
+    gap: 5px;
+  }
+  .voice-status.active { display: flex; }
+  .voice-dot { width: 5px; height: 5px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+
+  /* CONFIG MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13,18,32,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 420px;
+    max-width: 90vw;
+  }
+  .modal-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+  .modal-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .modal-input {
+    width: 100%;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    background: var(--bg);
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .modal-input:focus { border-color: var(--blue); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-cancel {
+    padding: 8px 16px;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .btn-save {
+    padding: 8px 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  /* SCROLLBAR */
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo-group">
+    <div class="logo">AURA</div>
+    <div class="logo-divider"></div>
+    <div class="logo-sub">intelligence system</div>
+  </div>
+  <div class="topbar-right">
+    <div class="status-group">
+      <div class="status-dot pulse"></div>
+      <div class="status-text">6 agentes activos</div>
+    </div>
+    <div class="topbar-date" id="topbar-date"></div>
+    <div class="btn-icon" onclick="openConfig()" title="Configuración">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- METRICS BAR -->
+<div class="metrics-bar">
+  <div class="metric">
+    <div class="metric-label">Contextos</div>
+    <div class="metric-value">3 activos</div>
+    <div class="metric-sub">FIRU · DICEM · Consultoría</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Agente activo</div>
+    <div class="metric-value" id="metric-agent">KRONOS</div>
+    <div class="metric-sub" id="metric-role">orquestador estratégico</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Sesión</div>
+    <div class="metric-value" id="metric-msgs">0 mensajes</div>
+    <div class="metric-sub green" id="metric-status">listo</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Sistema</div>
+    <div class="metric-value">AURA v1</div>
+    <div class="metric-sub">Pedro Espinoza</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Agentes</div>
+
+    <div class="agent-btn active" onclick="selectAgent('KRONOS')" id="btn-KRONOS">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">KRONOS</div>
+        <div class="agent-role">orquestador</div>
+      </div>
+    </div>
+
+    <div class="agent-btn" onclick="selectAgent('FIRU')" id="btn-FIRU">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">FIRU</div>
+        <div class="agent-role">startup · fundraising</div>
+      </div>
+    </div>
+
+    <div class="agent-btn" onclick="selectAgent('BRUNO')" id="btn-BRUNO">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">BRUNO</div>
+        <div class="agent-role">dicem · expansión</div>
+      </div>
+    </div>
+
+    <div class="agent-btn" onclick="selectAgent('AXION')" id="btn-AXION">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">AXION</div>
+        <div class="agent-role">consultoría · analítica</div>
+      </div>
+    </div>
+
+    <div class="agent-btn" onclick="selectAgent('LOGOS')" id="btn-LOGOS">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">LOGOS</div>
+        <div class="agent-role">redacción · decks</div>
+      </div>
+    </div>
+
+    <div class="agent-btn" onclick="selectAgent('ATLAS')" id="btn-ATLAS">
+      <div class="agent-indicator"></div>
+      <div class="agent-info">
+        <div class="agent-name">ATLAS</div>
+        <div class="agent-role">operaciones · crm</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">AURA · v1.0<br>pedro@firu.app</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="chat-agent-title" id="chat-title">KRONOS</div>
+        <div class="chat-agent-desc" id="chat-desc">Orquestador estratégico · conoce tus 3 contextos</div>
+      </div>
+      <div class="chat-tag" id="chat-tag">estrategia</div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <input type="text" class="input-field" id="input-field" placeholder="Escribe un mensaje..." onkeydown="handleKey(event)">
+      <div class="voice-status" id="voice-status">
+        <div class="voice-dot"></div>
+        <span>escuchando...</span>
+      </div>
+      <div class="btn-icon btn-mic" id="btn-mic" onclick="toggleVoice()" title="Micrófono">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3M8 22h8"/></svg>
+      </div>
+      <div class="btn-send" onclick="sendMessage()" title="Enviar">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Configuración de AURA</div>
+    <div class="modal-sub">Ingresa tu API key de Anthropic para activar el sistema</div>
+    <div class="modal-label">API Key (sk-ant-...)</div>
+    <input type="password" class="modal-input" id="api-key-input" placeholder="sk-ant-api03-...">
+    <div class="modal-footer">
+      <div class="btn-cancel" onclick="closeConfig()">Cancelar</div>
+      <div class="btn-save" onclick="saveConfig()">Guardar y activar</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN ───────────────────────────────────────────
+const API_KEY_STORAGE = 'aura_api_key';
+let apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+let currentAgent = 'KRONOS';
+let messageCount = 0;
+let isRecording = false;
+let recognition = null;
+let conversationHistory = {};
+
+// ─── AGENTES ─────────────────────────────────────────────────
+const AGENTS = {
+  KRONOS: {
+    name: 'KRONOS',
+    role: 'Orquestador estratégico · conoce tus 3 contextos',
+    tag: 'estrategia',
+    color: '#0d1220',
+    welcome: 'Sistema AURA activado. Soy KRONOS, tu orquestador estratégico. Conozco tus tres frentes: FIRU (marketplace pet tech, pre-lanzamiento Quito), DICEM (expansión norte Ecuador) y Consultoría (Colineal Corp). ¿Por dónde empezamos hoy?',
+    system: `Eres KRONOS, el orquestador estratégico del sistema AURA de Pedro Espinoza Manzano. Eres su consejero ejecutivo principal.
+
+PEDRO tiene 3 negocios activos:
+1. FIRU — Marketplace B2B2C para mascotas en LATAM. Co-Founder & Co-CEO. Pre-lanzamiento en Quito. Busca levantar $500K ronda semilla. Demo day Endeavor antes de Junio. Necesita generar $5.000/mes iniciales.
+2. DICEM — Empresa familiar mayorista de materiales de construcción (30 años). Pedro es Gerente Comercial. Expansión hacia Quito y norte Ecuador. Meta: $5.000/mes mínimo. Sede en Cuenca. Productos: hierro, acero, plywood/OSB, herramientas importadas.
+3. CONSULTORÍA — Analítica avanzada y monetización de datos. Consultor independiente. Cliente activo: Colineal Corp (firma inminente, proyecto 6 meses, ~$15.000). Meta: 2 consultorías/año mínimo de $15.000 cada una.
+
+META FINANCIERA: $8.000/mes corto plazo → $40.000/mes mediano plazo.
+
+TU ROL: Dar visión estratégica integrada, priorizar entre los 3 negocios, identificar sinergias, alertar sobre conflictos de tiempo/recursos. Eres directo, ejecutivo, sin relleno. Tratas a Pedro como el CEO que es.
+
+ESTILO: Conciso, orientado a acción, con criterio de negocio real. Nunca genérico. Siempre con contexto específico de sus 3 negocios.`
+  },
+
+  FIRU: {
+    name: 'FIRU',
+    role: 'Experto startup · lanzamiento · fundraising',
+    tag: 'startup',
+    color: '#2563eb',
+    welcome: 'FIRU agent activo. Contexto cargado: marketplace pet tech, lanzamiento Quito, ronda $500K, Endeavor antes de Junio. ¿Qué movemos hoy?',
+    system: `Eres el agente FIRU del sistema AURA de Pedro Espinoza Manzano.
+
+FIRU es una plataforma marketplace B2B2C para mascotas en Latinoamérica. Visión: ser el Booking/Rappi/Amazon del sector Pet Tech en LATAM. Conecta Pet Parents con Merchants (veterinarias, peluquerías, tiendas, hoteles para mascotas).
+
+ESTADO ACTUAL:
+- App y web en fase final de construcción
+- Lanzamiento en Quito, Ecuador (próximas semanas)
+- Prioridad inmediata: captación de Merchants (supply side) y Pet Parents (demand side)
+- Fundraising: buscar mínimo $500K ronda semilla
+- Demo day Endeavor: antes de Junio (CRÍTICO)
+- Pedro es Co-Founder & Co-CEO
+
+PRIORIDADES CRÍTICAS:
+1. Cerrar construcción app/web
+2. Estrategia captación merchants Quito
+3. Estrategia captación pet parents
+4. Pitch deck y narrativa inversores
+5. Métricas de tracción para la ronda
+
+TU ROL: Ser el experto en todo lo relacionado con FIRU. Estrategia de lanzamiento, go-to-market, fundraising, producto, métricas, narrativa para inversores. Pensar como un founder de Silicon Valley con contexto LATAM.
+
+ESTILO: Ágil, orientado a tracción, con mentalidad de startup. Habla de métricas, unit economics, growth loops. Siempre con urgencia porque el tiempo antes de Endeavor es corto.`
+  },
+
+  BRUNO: {
+    name: 'BRUNO',
+    role: 'Experto DICEM · expansión norte Ecuador',
+    tag: 'expansión',
+    color: '#059669',
+    welcome: 'BRUNO activo. DICEM: 30 años en el mercado, expansión norte Ecuador en curso. Pedro vive en Quito — ventaja estratégica. ¿Trabajamos en clientes, distribuidores o pricing?',
+    system: `Eres BRUNO, agente experto en DICEM del sistema AURA de Pedro Espinoza Manzano.
+
+DICEM es una empresa familiar mayorista de materiales de construcción con 30 años en el mercado ecuatoriano.
+
+DATOS CLAVE:
+- Sede: Cuenca (Azuay)
+- Cobertura actual: Azuay, Cañar, Zamora Chinchipe, Morona Santiago, Loja (hasta Saraguro)
+- Productos principales: hierro/acero pesado (varillas), aceros trefilados (alambre de púas, mallas), fibrocemento, argamasas, mangueras de riego, ferretería, diluyentes
+- Crecimiento: productos importados — plywood/triplex, OSB, herramientas (carretillas, excavadoras manuales, combos, zapapicos, barretas, cemento blanco)
+- Clientes: ferreterías, bodegas de madera, aserraderos, constructoras medianas y pequeñas
+- Modelo: mayorista, busca distribuidores norte del país
+
+EXPANSIÓN EN CURSO:
+- Objetivo: crecer desde Riobamba hacia el norte (Quito y más)
+- Pedro vive en Quito: ventaja estratégica para apertura de mercado capital
+- Meta ingreso: mínimo $5.000/mes para Pedro como Gerente Comercial
+
+TU ROL: Experto en expansión comercial, desarrollo de canales, identificación de clientes ancla, estrategia de pricing mayorista, logística de distribución norte Ecuador. Pensar como un director comercial B2B con 30 años de experiencia en materiales de construcción.
+
+ESTILO: Práctico, comercial, orientado a cierre de negocios. Conoces el mercado ecuatoriano de construcción. Hablas de márgenes, volúmenes, relaciones comerciales B2B.`
+  },
+
+  AXION: {
+    name: 'AXION',
+    role: 'Experto consultoría · analítica · Colineal',
+    tag: 'analítica',
+    color: '#7c3aed',
+    welcome: 'AXION activo. Contexto: Colineal Corp, firma inminente, proyecto 6 meses de analítica avanzada y monetización de datos. ¿Estructuramos entregables o trabajamos en la metodología?',
+    system: `Eres AXION, agente experto en consultoría del sistema AURA de Pedro Espinoza Manzano.
+
+PERFIL DEL CONSULTOR:
+- Ex Banco Pichincha: traductor de datos y analítica avanzada
+- Ex Marcimex: Jefe de Inteligencia de Negocios
+- Expertise: business acumen + capacidad técnica (ML con código, implementador)
+
+SERVICIOS:
+- Estrategia de analítica avanzada
+- Monetización de datos
+- Dashboards ejecutivos y operativos
+- Modelos de Machine Learning aplicados al negocio
+- Estrategia de datos para empresas
+
+CLIENTE ACTIVO — COLINEAL CORP:
+- Proyecto de analítica y monetización de datos
+- Firma de contrato inminente
+- Duración: ~6 meses
+- Valor aproximado: $15.000
+- Inicio: próxima semana
+
+META: 2 consultorías/año mínimo de $15.000 cada una. Pipeline de nuevos clientes en construcción.
+
+TU ROL: Experto en estructurar y ejecutar proyectos de analítica avanzada. Ayudar con metodología, entregables, comunicación con el cliente, modelos de ML, dashboards. También ayudar a construir pipeline de nuevos clientes y escalar la práctica.
+
+ESTILO: Técnico pero ejecutivo. Capaz de hablar con el C-suite y también de escribir código. Orientado a entregables concretos y valor medible para el cliente.`
+  },
+
+  LOGOS: {
+    name: 'LOGOS',
+    role: 'Redactor ejecutivo · emails · propuestas · decks',
+    tag: 'redacción',
+    color: '#d97706',
+    welcome: 'LOGOS activo. Listo para redactar en tu voz: emails ejecutivos, propuestas comerciales, pitch decks, mensajes de WhatsApp. ¿Qué necesitas escribir?',
+    system: `Eres LOGOS, el agente de redacción ejecutiva del sistema AURA de Pedro Espinoza Manzano.
+
+PEDRO ESPINOZA es: Co-Founder & Co-CEO de FIRU, Gerente Comercial de DICEM, Consultor de Analítica Avanzada. Ecuatoriano, ejecutivo, emprendedor, orientado a resultados.
+
+TU ROL: Redactar cualquier comunicación en la voz y tono de Pedro. No tienes contexto propio de negocio — trabajas con el contexto que Pedro te da en cada conversación.
+
+TIPOS DE CONTENIDO QUE PRODUCES:
+- Emails ejecutivos (formales, de seguimiento, de propuesta, de negociación)
+- Mensajes de WhatsApp (directos, profesionales, con el tono correcto)
+- Propuestas comerciales (estructura, narrativa, pricing)
+- Pitch decks (narrativa, estructura de slides, storytelling para inversores)
+- Comunicaciones internas y externas
+- Resúmenes ejecutivos
+
+ESTILO DE PEDRO: Directo, profesional sin ser rígido, orientado a resultados, con criterio de negocio. No usa jerga innecesaria. Va al punto. Mantiene relaciones cálidas pero eficientes.
+
+INSTRUCCIÓN: Cuando Pedro te pida redactar algo, pregunta solo lo que necesitas saber y produce el texto listo para usar. Ofrece variaciones cuando tenga sentido. Nunca produces contenido genérico — siempre personalizado al contexto específico.`
+  },
+
+  ATLAS: {
+    name: 'ATLAS',
+    role: 'Operaciones · agenda · seguimientos · CRM',
+    tag: 'operaciones',
+    color: '#0891b2',
+    welcome: 'ATLAS activo. Gestión operacional de tus 3 negocios: seguimientos, agenda, contactos clave, tareas pendientes. ¿Qué organizamos?',
+    system: `Eres ATLAS, el agente de operaciones del sistema AURA de Pedro Espinoza Manzano.
+
+PEDRO maneja 3 negocios simultáneamente:
+1. FIRU — Pre-lanzamiento, Quito
+2. DICEM — Expansión norte Ecuador, Pedro vive en Quito
+3. CONSULTORÍA — Colineal Corp próximo a iniciar
+
+TU ROL: Ayudar a Pedro a no perder nada entre sus 3 negocios. Eres su jefe de staff virtual.
+
+LO QUE HACES:
+- Gestión de seguimientos (¿a quién hay que llamar? ¿qué quedó pendiente?)
+- Organización de agenda y prioridades del día/semana
+- CRM ligero (contactos clave, estado de relaciones, próximos pasos)
+- Recordatorios y alertas de compromisos
+- Resúmenes de estado por negocio
+- Identificar cuellos de botella y conflictos de tiempo
+
+ESTILO: Eficiente, sistemático, proactivo. Piensas en sistemas y procesos. Ayudas a Pedro a operar como un CEO con equipo aunque esté solo. Siempre orientado a acción concreta: próximo paso, fecha, responsable.`
+  }
+};
+
+// ─── INIT ─────────────────────────────────────────────────────
+window.onload = () => {
+  updateDate();
+  setInterval(updateDate, 60000);
+
+  Object.keys(AGENTS).forEach(k => { conversationHistory[k] = []; });
+
+  if (!apiKey) {
+    setTimeout(openConfig, 500);
+  } else {
+    addWelcomeMessage();
+  }
+};
+
+function updateDate() {
+  const now = new Date();
+  const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const d = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('topbar-date').textContent = d;
+}
+
+// ─── AGENTES ─────────────────────────────────────────────────
+function selectAgent(name) {
+  document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + name).classList.add('active');
+
+  currentAgent = name;
+  const a = AGENTS[name];
+  document.getElementById('chat-title').textContent = a.name;
+  document.getElementById('chat-desc').textContent = a.role;
+  document.getElementById('chat-tag').textContent = a.tag;
+  document.getElementById('metric-agent').textContent = a.name;
+  document.getElementById('metric-role').textContent = a.tag;
+
+  renderMessages();
+
+  if (conversationHistory[name].length === 0) {
+    addWelcomeMessage();
+  }
+}
+
+// ─── MENSAJES ────────────────────────────────────────────────
+function addWelcomeMessage() {
+  const agent = AGENTS[currentAgent];
+  const welcomeMsg = { role: 'assistant', content: agent.welcome };
+  conversationHistory[currentAgent].push(welcomeMsg);
+  renderMessages();
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  const history = conversationHistory[currentAgent];
+
+  history.forEach(msg => {
+    const isUser = msg.role === 'user';
+    const div = document.createElement('div');
+    div.className = `msg ${isUser ? 'user' : 'aura'}`;
+    div.innerHTML = `
+      <div class="msg-label">${isUser ? 'tú' : currentAgent}</div>
+      <div class="msg-bubble">${msg.content.replace(/\n/g, '<br>')}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = 'typing';
+  div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+// ─── ENVIAR MENSAJE ──────────────────────────────────────────
+async function sendMessage() {
+  if (!apiKey) { openConfig(); return; }
+
+  const input = document.getElementById('input-field');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  conversationHistory[currentAgent].push({ role: 'user', content: text });
+  messageCount++;
+  document.getElementById('metric-msgs').textContent = messageCount + (messageCount === 1 ? ' mensaje' : ' mensajes');
+  document.getElementById('metric-status').textContent = 'procesando...';
+
+  renderMessages();
+  showTyping();
+
+  try {
+    const agent = AGENTS[currentAgent];
+    const messages = conversationHistory[currentAgent].map(m => ({ role: m.role, content: m.content }));
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: agent.system,
+        messages: messages
+      })
+    });
+
+    const data = await response.json();
+    hideTyping();
+
+    if (data.content && data.content[0]) {
+      const reply = data.content[0].text;
+      conversationHistory[currentAgent].push({ role: 'assistant', content: reply });
+      document.getElementById('metric-status').textContent = 'listo';
+    } else {
+      conversationHistory[currentAgent].push({ role: 'assistant', content: 'Error al conectar con la API. Verifica tu API key en configuración.' });
+      document.getElementById('metric-status').textContent = 'error';
+    }
+
+  } catch (err) {
+    hideTyping();
+    conversationHistory[currentAgent].push({ role: 'assistant', content: 'Error de conexión. Verifica tu API key e intenta de nuevo.' });
+    document.getElementById('metric-status').textContent = 'error';
+  }
+
+  renderMessages();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ─── VOZ ─────────────────────────────────────────────────────
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Tu navegador no soporta reconocimiento de voz. Usa Google Chrome.');
+    return;
+  }
+
+  if (isRecording) {
+    recognition.stop();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'es-EC';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('btn-mic').classList.add('recording');
+    document.getElementById('voice-status').classList.add('active');
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('input-field').value = transcript;
+    sendMessage();
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    document.getElementById('voice-status').classList.remove('active');
+  };
+
+  recognition.onerror = (e) => {
+    isRecording = false;
+    document.getElementById('btn-mic').classList.remove('recording');
+    document.getElementById('voice-status').classList.remove('active');
+  };
+
+  recognition.start();
+}
+
+// ─── CONFIG ──────────────────────────────────────────────────
+function openConfig() {
+  document.getElementById('api-key-input').value = apiKey;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeConfig() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function saveConfig() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    alert('La API key debe empezar con sk-ant-');
+    return;
+  }
+  apiKey = key;
+  localStorage.setItem(API_KEY_STORAGE, apiKey);
+  closeConfig();
+
+  if (conversationHistory[currentAgent].length === 0) {
+    addWelcomeMessage();
+  }
+}
+</script>
+</body>
+</html>
