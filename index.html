@@ -884,6 +884,7 @@ async function sendMessage() {
       const reply = data.content[0].text;
       conversationHistory[currentAgent].push({ role: 'assistant', content: reply });
       document.getElementById('metric-status').textContent = 'listo';
+      speakText(reply);
     } else {
       const errMsg = data.error ? `Error API: ${data.error.message}` : 'Error al conectar. Verifica tu API key en configuración.';
       conversationHistory[currentAgent].push({ role: 'assistant', content: errMsg });
@@ -906,6 +907,21 @@ function handleKey(e) {
   }
 }
 
+
+// ─── TEXT TO SPEECH ──────────────────────────────────────────
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/[#*`]/g, "").replace(/\n/g, " ").substring(0, 500);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = "es-EC";
+  utt.rate = 1.05;
+  utt.pitch = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const spanish = voices.find(v => v.lang.startsWith("es")) || voices[0];
+  if (spanish) utt.voice = spanish;
+  window.speechSynthesis.speak(utt);
+}
 // ─── VOZ ─────────────────────────────────────────────────────
 function toggleVoice() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
