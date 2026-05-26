@@ -582,7 +582,8 @@
 <script>
 // ─── CONFIGURACIÓN ───────────────────────────────────────────
 const API_KEY_STORAGE = 'aura_api_key';
-let apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+let apiKey = '';
+try { apiKey = localStorage.getItem(API_KEY_STORAGE) || sessionStorage.getItem(API_KEY_STORAGE) || ''; } catch(e) {}
 let currentAgent = 'KRONOS';
 let messageCount = 0;
 let isRecording = false;
@@ -884,13 +885,14 @@ async function sendMessage() {
       conversationHistory[currentAgent].push({ role: 'assistant', content: reply });
       document.getElementById('metric-status').textContent = 'listo';
     } else {
-      conversationHistory[currentAgent].push({ role: 'assistant', content: 'Error al conectar con la API. Verifica tu API key en configuración.' });
+      const errMsg = data.error ? `Error API: ${data.error.message}` : 'Error al conectar. Verifica tu API key en configuración.';
+      conversationHistory[currentAgent].push({ role: 'assistant', content: errMsg });
       document.getElementById('metric-status').textContent = 'error';
     }
 
   } catch (err) {
     hideTyping();
-    conversationHistory[currentAgent].push({ role: 'assistant', content: 'Error de conexión. Verifica tu API key e intenta de nuevo.' });
+    conversationHistory[currentAgent].push({ role: 'assistant', content: `Error de conexión: ${err.message}. Verifica tu API key e intenta de nuevo.` });
     document.getElementById('metric-status').textContent = 'error';
   }
 
@@ -966,7 +968,8 @@ function saveConfig() {
     return;
   }
   apiKey = key;
-  localStorage.setItem(API_KEY_STORAGE, apiKey);
+  try { localStorage.setItem(API_KEY_STORAGE, apiKey); } catch(e) {}
+  try { sessionStorage.setItem(API_KEY_STORAGE, apiKey); } catch(e) {}
   closeConfig();
 
   if (conversationHistory[currentAgent].length === 0) {
